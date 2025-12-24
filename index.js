@@ -49,6 +49,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     const db = client.db("Zetroo");
+    const productCollection = db.collection("products");
 
     // generate token api
     app.post("/jwt", (req, res) => {
@@ -69,7 +70,7 @@ async function run() {
       // Inform the frontend
       res.send({ success: true });
     });
-    // logout 
+    // logout
     app.post("/logout", (req, res) => {
       res.clearCookie("token", {
         httpOnly: true,
@@ -80,6 +81,30 @@ async function run() {
       res.send({ success: true });
     });
 
+    // get products (optionally filtered by discount)
+    app.get("/products", async (req, res) => {
+      try {
+        const discount = req.query.discount;
+        let query = {};
+
+        if (discount === "true") {
+          // products that have discount
+          query = { discount: { $gt: 0 } };
+        }
+
+        if (discount === "false") {
+          // products without discount
+          query = {
+            $or: [{ discount: 0 }, { discount: { $exists: false } }],
+          };
+        }
+
+        const result = await productCollection.find(query).toArray();
+        res.send(result);
+      } catch (error) {
+        res.status(500).send(error);
+      }
+    });
 
     
 
