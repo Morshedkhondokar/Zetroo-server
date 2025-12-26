@@ -102,6 +102,29 @@ async function run() {
       }
     });
 
+    // Get all users (admin only)
+    app.get("/users", async (req, res) => {
+      try {
+        const users = await usersCollection.find().toArray();
+        res.send(users);
+      } catch (error) {
+        res.status(500).send({ message: "Server error", error });
+      }
+    });
+
+    // GET user by email
+    app.get("/user/:email", async (req, res) => {
+      const email = req.params.email;
+
+      const user = await usersCollection.findOne({ email });
+
+      if (!user) {
+        return res.status(404).send({ role: "guest" });
+      }
+
+      res.send({ role: user.role });
+    });
+
     // get products (optionally filtered by discount)
     app.get("/products", async (req, res) => {
       try {
