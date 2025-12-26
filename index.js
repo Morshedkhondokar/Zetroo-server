@@ -106,7 +106,46 @@ async function run() {
       }
     });
 
-    
+
+    // get products filtered by user query 
+    app.get("/products/filter", async (req, res) => {
+      try {
+        const { categories, brands, discount, name } = req.query;
+        let query = {};
+
+        //  Filter by discount
+        if (discount === "true") {
+          query.discount = { $gt: 0 };
+        } else if (discount === "false") {
+          query.$or = [{ discount: 0 }, { discount: { $exists: false } }];
+        }
+
+        //  Filter by categories
+        if (categories) {
+          const categoryArray = Array.isArray(categories)  ? categories  : categories.split(",");
+          query.category = { $in: categoryArray };
+        }
+
+        //  Filter by brands
+        if (brands) {
+          const brandArray = Array.isArray(brands) ? brands : brands.split(",");
+          query.brand = { $in: brandArray };
+        }
+
+        //  Filter by product name (search)
+        if (name) {
+          // case-insensitive search using regex
+          query.name = { $regex: name, $options: "i" };
+        }
+        console.log(query)
+        const products = await productCollection.find(query).toArray();
+        res.send(products);
+      } catch (error) {
+        res.status(500).send({ message: "Server error", error });
+      }
+    });
+
+
 
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
