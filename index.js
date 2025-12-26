@@ -50,6 +50,7 @@ async function run() {
   try {
     const db = client.db("Zetroo");
     const productCollection = db.collection("products");
+    const usersCollection = db.collection("users");
 
     // generate token api
     app.post("/jwt", (req, res) => {
@@ -81,6 +82,26 @@ async function run() {
       res.send({ success: true });
     });
 
+    // save user in db
+    app.post("/user", async (req, res) => {
+      try {
+        const user = req.body;
+        const query = { email: user.email };
+
+        // check if user already exists
+        const isExist = await usersCollection.findOne(query);
+
+        if (isExist) {
+          return res.send({ message: "User already exists" });
+        }
+
+        const result = await usersCollection.insertOne(user);
+        res.send({ message: "User saved successfully", result });
+      } catch (error) {
+        res.status(500).send({ message: "Server error" });
+      }
+    });
+
     // get products (optionally filtered by discount)
     app.get("/products", async (req, res) => {
       try {
@@ -106,8 +127,7 @@ async function run() {
       }
     });
 
-
-    // get products filtered by user query 
+    // get products filtered by user query
     app.get("/products/filter", async (req, res) => {
       try {
         const { categories, brands, discount, name } = req.query;
@@ -122,7 +142,9 @@ async function run() {
 
         //  Filter by categories
         if (categories) {
-          const categoryArray = Array.isArray(categories)  ? categories  : categories.split(",");
+          const categoryArray = Array.isArray(categories)
+            ? categories
+            : categories.split(",");
           query.category = { $in: categoryArray };
         }
 
@@ -137,15 +159,13 @@ async function run() {
           // case-insensitive search using regex
           query.name = { $regex: name, $options: "i" };
         }
-        console.log(query)
+        console.log(query);
         const products = await productCollection.find(query).toArray();
         res.send(products);
       } catch (error) {
         res.status(500).send({ message: "Server error", error });
       }
     });
-
-
 
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
