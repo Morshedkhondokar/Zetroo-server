@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { MongoClient, ServerApiVersion } from "mongodb";
+import { MongoClient, ObjectId, ServerApiVersion } from "mongodb";
 import dotenv from "dotenv";
 dotenv.config();
 import jwt from "jsonwebtoken";
@@ -189,6 +189,27 @@ async function run() {
         res.status(500).send({ message: "Server error", error });
       }
     });
+
+    // Get single product by ID
+  app.get("/productDetails/:id", async (req, res) => {
+    try {
+      const id = req.params.id;
+
+      const query = { _id: new ObjectId(id) };
+      const product = await productCollection.findOne(query);
+
+      if (!product) {
+        return res.status(404).send({ message: "Product not found" });
+      }
+
+      res.send(product);
+
+    } catch (error) {
+      res.status(500).send({ message: "Server error Get single product by ID" });
+    }
+  });
+
+
 
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
