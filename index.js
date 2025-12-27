@@ -52,17 +52,17 @@ async function run() {
     const productCollection = db.collection("products");
     const usersCollection = db.collection("users");
 
-    const verifyAdmin = async(req,res,next) =>{
-      console.log('hello token')
-      const user = req.user
-      const query = {email: user?.email}
-      const result = await usersCollection.findOne(query)
-      console.log(result?.role)
-      if (!result || result?.role !== 'admin')
-        return res.status(401).send({ message: 'unauthorized access!!' })
-      
-      next()
-    }
+    const verifyAdmin = async (req, res, next) => {
+      console.log("hello token");
+      const user = req.user;
+      const query = { email: user?.email };
+      const result = await usersCollection.findOne(query);
+      console.log(result?.role);
+      if (!result || result?.role !== "admin")
+        return res.status(401).send({ message: "unauthorized access!!" });
+
+      next();
+    };
 
     // generate token api
     app.post("/jwt", (req, res) => {
@@ -137,6 +137,18 @@ async function run() {
       res.send({ role: user.role });
     });
 
+    // add product
+    app.post("/products", verifyToken, verifyAdmin, async (req, res) => {
+      try {
+        const product = req.body;
+        const result = await productCollection.insertOne(product);
+        res.send({ message: "Product added successfully", result });
+      } catch (error) {
+        console.error(error);
+        res.status(500).send({ message: "Failed to add product" });
+      }
+    });
+
     // get products (optionally filtered by discount)
     app.get("/products", async (req, res) => {
       try {
@@ -203,25 +215,24 @@ async function run() {
     });
 
     // Get single product by ID
-  app.get("/productDetails/:id", async (req, res) => {
-    try {
-      const id = req.params.id;
+    app.get("/productDetails/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
 
-      const query = { _id: new ObjectId(id) };
-      const product = await productCollection.findOne(query);
+        const query = { _id: new ObjectId(id) };
+        const product = await productCollection.findOne(query);
 
-      if (!product) {
-        return res.status(404).send({ message: "Product not found" });
+        if (!product) {
+          return res.status(404).send({ message: "Product not found" });
+        }
+
+        res.send(product);
+      } catch (error) {
+        res
+          .status(500)
+          .send({ message: "Server error Get single product by ID" });
       }
-
-      res.send(product);
-
-    } catch (error) {
-      res.status(500).send({ message: "Server error Get single product by ID" });
-    }
-  });
-
-
+    });
 
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
