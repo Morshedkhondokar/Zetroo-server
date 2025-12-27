@@ -52,6 +52,18 @@ async function run() {
     const productCollection = db.collection("products");
     const usersCollection = db.collection("users");
 
+    const verifyAdmin = async(req,res,next) =>{
+      console.log('hello token')
+      const user = req.user
+      const query = {email: user?.email}
+      const result = await usersCollection.findOne(query)
+      console.log(result?.role)
+      if (!result || result?.role !== 'admin')
+        return res.status(401).send({ message: 'unauthorized access!!' })
+      
+      next()
+    }
+
     // generate token api
     app.post("/jwt", (req, res) => {
       const user = req.body;
