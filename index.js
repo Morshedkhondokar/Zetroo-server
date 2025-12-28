@@ -234,6 +234,47 @@ async function run() {
       }
     });
 
+    // Update a product by ID
+    app.put("/products/:id", verifyToken, verifyAdmin, async (req, res) => {
+      try {
+        const id = req.params.id;
+        const updatedProduct = req.body;
+
+        const result = await productCollection.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: updatedProduct }
+        );
+
+        if (result.matchedCount === 0) {
+          return res.status(404).send({ message: "Product not found" });
+        }
+
+        res.send({ message: "Product updated successfully" });
+      } catch (error) {
+        console.error(error);
+        res.status(500).send({ message: "Failed to update product" });
+      }
+    });
+
+    // Delete a product by ID 
+    app.delete("/products/:id", verifyToken, verifyAdmin, async (req, res) => {
+      try {
+        const id = req.params.id;
+        const result = await productCollection.deleteOne({
+          _id: new ObjectId(id),
+        });
+
+        if (result.deletedCount === 0) {
+          return res.status(404).send({ message: "Product not found" });
+        }
+
+        res.send({ message: "Product deleted successfully" });
+      } catch (error) {
+        console.error(error);
+        res.status(500).send({ message: "Failed to delete product" });
+      }
+    });
+
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
     // Send a ping to confirm a successful connection
