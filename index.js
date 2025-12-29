@@ -5,6 +5,9 @@ import dotenv from "dotenv";
 dotenv.config();
 import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
+import Stripe from "stripe";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const port = process.env.PORT || 5000;
 const app = express();
@@ -256,7 +259,7 @@ async function run() {
       }
     });
 
-    // Delete a product by ID 
+    // Delete a product by ID
     app.delete("/products/:id", verifyToken, verifyAdmin, async (req, res) => {
       try {
         const id = req.params.id;
@@ -273,6 +276,20 @@ async function run() {
         console.error(error);
         res.status(500).send({ message: "Failed to delete product" });
       }
+    });
+
+    // create-payment-intent
+    app.post("/create-payment-intent", async (req, res) => {
+      const amount = req.body.amount;
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount * 100, // dollars → cents
+        currency: "usd",
+      });
+
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
     });
 
     // Connect the client to the server	(optional starting in v4.7)
