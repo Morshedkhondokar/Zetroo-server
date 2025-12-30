@@ -54,6 +54,7 @@ async function run() {
     const db = client.db("Zetroo");
     const productCollection = db.collection("products");
     const usersCollection = db.collection("users");
+    const orderCollection = db.collection("orders");
 
     const verifyAdmin = async (req, res, next) => {
       console.log("hello token");
@@ -277,6 +278,58 @@ async function run() {
         res.status(500).send({ message: "Failed to delete product" });
       }
     });
+
+    // Order save API
+    app.post("/orders", verifyToken, async (req, res) => {
+      const order = req.body;
+
+      // user only can create his own order
+      if (order.email !== req.user.email) {
+        return res.status(403).send({ message: "Forbidden" });
+      }
+
+      order.createdAt = new Date();
+      order.deliveryStatus = "pending";
+
+      const result = await orderCollection.insertOne(order);
+      res.send({ success: true, result });
+    });
+
+    // User orders get
+    app.get("/orders/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+
+      if (email !== req.user.email) {
+        return res.status(403).send({ message: "Forbidden" });
+      }
+
+      const orders = await orderCollection.find({ email }).toArray();
+      res.send(orders);
+    });
+
+    // Admin Get all orders
+    app.get("/orders", verifyToken, verifyAdmin, async (req, res) => {
+        try {
+            const orders = await orderCollection.find().toArray();
+            res.send(orders);
+        } catch (error) {
+            console.error("Error fetching all orders:", error);
+            res.status(500).send({ message: "Failed to retrieve orders.", error });
+        }
+    });
+
+    // Admin Update delivery status
+    app.patch("/orders/status/:id", verifyToken,verifyAdmin,async (req, res) => {
+        const { status } = req.body;
+
+        const result = await orderCollection.updateOne(
+          { _id: new ObjectId(req.params.id) },
+          { $set: { deliveryStatus: status } }
+        );
+
+        res.send(result);
+      }
+    );
 
     // create-payment-intent
     app.post("/create-payment-intent", async (req, res) => {
