@@ -14,7 +14,7 @@ const app = express();
 
 // middleware
 const corsOptions = {
-  origin: "http://localhost:5173",
+  origin: "https://server-tau-eight-33.vercel.app/",
   credentials: true,
 };
 app.use(cors(corsOptions));
