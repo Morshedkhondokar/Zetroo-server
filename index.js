@@ -14,7 +14,7 @@ const app = express();
 
 // middleware
 const corsOptions = {
-  origin: "https://zetroo-69f51.web.app/",
+  origin: "https://zetroo-69f51.web.app",
   credentials: true,
 };
 app.use(cors(corsOptions));
