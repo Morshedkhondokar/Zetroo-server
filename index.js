@@ -14,7 +14,7 @@ const app = express();
 
 // middleware
 const corsOptions = {
-  origin: "https://zetroo-69f51.web.app",
+  origin: ["http://localhost:5173", "https://zetroo-69f51.web.app"],
   credentials: true,
 };
 app.use(cors(corsOptions));
@@ -309,17 +309,21 @@ async function run() {
 
     // Admin Get all orders
     app.get("/orders", verifyToken, verifyAdmin, async (req, res) => {
-        try {
-            const orders = await orderCollection.find().toArray();
-            res.send(orders);
-        } catch (error) {
-            console.error("Error fetching all orders:", error);
-            res.status(500).send({ message: "Failed to retrieve orders.", error });
-        }
+      try {
+        const orders = await orderCollection.find().toArray();
+        res.send(orders);
+      } catch (error) {
+        console.error("Error fetching all orders:", error);
+        res.status(500).send({ message: "Failed to retrieve orders.", error });
+      }
     });
 
     // Admin Update delivery status
-    app.patch("/orders/status/:id", verifyToken,verifyAdmin,async (req, res) => {
+    app.patch(
+      "/orders/status/:id",
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
         const { status } = req.body;
 
         const result = await orderCollection.updateOne(
